@@ -1,0 +1,81 @@
+{
+  "groups": [
+    {
+      "name": "campus.security",
+      "type": "com.campus.agent.config.SecurityProperties",
+      "description": "JWT security settings for campus-multi-agent."
+    },
+    {
+      "name": "campus.cors",
+      "type": "com.campus.agent.config.CorsProperties",
+      "description": "CORS settings for browser access."
+    },
+    {
+      "name": "campus.vector",
+      "type": "com.campus.agent.config.VectorProperties",
+      "description": "pgvector integration settings."
+    },
+    {
+      "name": "campus.upload",
+      "type": "com.campus.agent.document.DocumentProperties",
+      "description": "Course material upload limits."
+    }
+  ],
+  "properties": [
+    {
+      "name": "campus.security.jwt-secret",
+      "type": "java.lang.String",
+      "description": "HMAC secret used to sign JWT tokens. Use a private value in local environment files."
+    },
+    {
+      "name": "campus.security.token-ttl-minutes",
+      "type": "java.lang.Long",
+      "defaultValue": 720,
+      "description": "JWT token lifetime in minutes."
+    },
+    {
+      "name": "campus.cors.allowed-origins",
+      "type": "java.util.List<java.lang.String>",
+      "description": "Allowed browser origins."
+    },
+    {
+      "name": "campus.vector.datasource.jdbc-url",
+      "type": "java.lang.String",
+      "description": "JDBC URL for the PostgreSQL pgvector database."
+    },
+    {
+      "name": "campus.vector.datasource.username",
+      "type": "java.lang.String",
+      "description": "Username for the PostgreSQL pgvector database."
+    },
+    {
+      "name": "campus.vector.datasource.password",
+      "type": "java.lang.String",
+      "description": "Password for the PostgreSQL pgvector database. Prefer environment variables in real deployments."
+    },
+    {
+      "name": "campus.vector.datasource.driver-class-name",
+      "type": "java.lang.String",
+      "defaultValue": "org.postgresql.Driver",
+      "description": "JDBC driver class for the pgvector datasource."
+    },
+    {
+      "name": "campus.vector.dimensions",
+      "type": "java.lang.Integer",
+      "defaultValue": 1536,
+      "description": "Embedding vector dimensions used by the pgvector table."
+    },
+    {
+      "name": "campus.vector.initialize-schema",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to let Spring AI initialize the pgvector schema."
+    },
+    {
+      "name": "campus.upload.max-characters",
+      "type": "java.lang.Integer",
+      "defaultValue": 120000,
+      "description": "Maximum characters accepted for a text material upload."
+    }
+  ]
+}
