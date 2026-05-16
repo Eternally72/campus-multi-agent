@@ -1,12 +1,19 @@
 const apiBase = "/api";
 let token = localStorage.getItem("campusToken") || "";
+let currentUser = JSON.parse(localStorage.getItem("campusUser") || "null");
 let activeSessionId = null;
 
 const $ = (selector) => document.querySelector(selector);
 const state = $("#authState");
+const avatar = $("#avatar");
 
 function setState(message) {
   state.textContent = message;
+}
+
+function setAvatar(name) {
+  const source = (name || "").trim();
+  avatar.textContent = source ? Array.from(source)[0].toUpperCase() : "?";
 }
 
 function headers(json = true) {
@@ -30,7 +37,10 @@ async function request(path, options = {}) {
 
 function rememberAuth(data) {
   token = data.token;
+  currentUser = data;
   localStorage.setItem("campusToken", token);
+  localStorage.setItem("campusUser", JSON.stringify(data));
+  setAvatar(data.displayName || data.username);
   setState(`已登录：${data.displayName}`);
   refreshAll();
 }
@@ -137,34 +147,48 @@ $("#todoForm").addEventListener("submit", async (event) => {
 async function loadCourses() {
   if (!token) return;
   const data = await request("/courses");
-  $("#courseList").innerHTML = data.map((item) => `
+  $("#courseList").innerHTML = data.length ? data.map((item) => `
     <article class="item">
       <strong>#${item.id} ${escapeHtml(item.name)}</strong>
       <div class="meta">${escapeHtml(item.term || "未设置学期")} · ${escapeHtml(item.teacher || "未设置教师")}</div>
     </article>
-  `).join("");
+  `).join("") : `<div class="empty">还没有课程</div>`;
 }
 
 async function loadMaterials() {
   if (!token) return;
   const data = await request("/materials");
-  $("#materialList").innerHTML = data.map((item) => `
+  $("#materialList").innerHTML = data.length ? data.map((item) => `
     <article class="item">
       <strong>${escapeHtml(item.title)}</strong>
       <div class="meta">状态：${item.status}${item.courseId ? ` · 课程 #${item.courseId}` : ""}${item.errorMessage ? ` · ${escapeHtml(item.errorMessage)}` : ""}</div>
+      <button class="tiny danger" data-material-id="${item.id}">删除</button>
     </article>
-  `).join("");
+  `).join("") : `<div class="empty">还没有资料</div>`;
+  document.querySelectorAll("[data-material-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      if (!window.confirm("删除后会同步移除知识库索引，确认删除？")) {
+        return;
+      }
+      try {
+        await request(`/materials/${button.dataset.materialId}`, { method: "DELETE" });
+        loadMaterials();
+      } catch (error) {
+        window.alert(error.message);
+      }
+    });
+  });
 }
 
 async function loadTodos() {
   if (!token) return;
   const data = await request("/todos");
-  $("#todoList").innerHTML = data.map((item) => `
+  $("#todoList").innerHTML = data.length ? data.map((item) => `
     <article class="item">
       <strong>${escapeHtml(item.title)}</strong>
       <div class="meta">${item.status} · ${item.dueDate || "未设置日期"} · ${escapeHtml(item.description || "")}</div>
     </article>
-  `).join("");
+  `).join("") : `<div class="empty">还没有待办</div>`;
 }
 
 function refreshAll() {
@@ -172,7 +196,7 @@ function refreshAll() {
 }
 
 function escapeHtml(value) {
-  return String(value)
+  return String(value ?? "")
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
@@ -180,7 +204,10 @@ function escapeHtml(value) {
     .replaceAll("'", "&#039;");
 }
 
-if (token) {
-  setState("已保存登录态");
+if (token && currentUser) {
+  setAvatar(currentUser.displayName || currentUser.username);
+  setState(`已登录：${currentUser.displayName || currentUser.username}`);
   refreshAll();
+} else {
+  setAvatar("");
 }

@@ -19,6 +19,11 @@
       "name": "campus.upload",
       "type": "com.campus.agent.document.DocumentProperties",
       "description": "Course material upload limits."
+    },
+    {
+      "name": "campus.rag",
+      "type": "com.campus.agent.rag.RagProperties",
+      "description": "RAG retrieval, chunking, and reranking settings."
     }
   ],
   "properties": [
@@ -76,6 +81,54 @@
       "type": "java.lang.Integer",
       "defaultValue": 120000,
       "description": "Maximum characters accepted for a text material upload."
+    },
+    {
+      "name": "campus.rag.chunk-size",
+      "type": "java.lang.Integer",
+      "defaultValue": 900,
+      "description": "Maximum characters per text chunk before embedding."
+    },
+    {
+      "name": "campus.rag.chunk-overlap",
+      "type": "java.lang.Integer",
+      "defaultValue": 120,
+      "description": "Overlapped characters between adjacent chunks."
+    },
+    {
+      "name": "campus.rag.top-k",
+      "type": "java.lang.Integer",
+      "defaultValue": 5,
+      "description": "Final number of RAG chunks injected into the answer prompt."
+    },
+    {
+      "name": "campus.rag.candidate-k",
+      "type": "java.lang.Integer",
+      "defaultValue": 12,
+      "description": "Number of vector candidates retrieved before reranking."
+    },
+    {
+      "name": "campus.rag.similarity-threshold",
+      "type": "java.lang.Double",
+      "defaultValue": 0.0,
+      "description": "Minimum vector similarity threshold for candidate retrieval."
+    },
+    {
+      "name": "campus.rag.rerank-enabled",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether lightweight local reranking is enabled."
+    },
+    {
+      "name": "campus.rag.vector-weight",
+      "type": "java.lang.Double",
+      "defaultValue": 0.82,
+      "description": "Weight of vector score in lightweight reranking."
+    },
+    {
+      "name": "campus.rag.lexical-weight",
+      "type": "java.lang.Double",
+      "defaultValue": 0.18,
+      "description": "Weight of lexical overlap score in lightweight reranking."
     }
   ]
 }

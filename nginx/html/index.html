@@ -9,22 +9,28 @@
 <body>
   <main class="shell">
     <aside class="sidebar">
-      <div>
-        <h1>campus-multi-agent</h1>
-        <p class="muted">校园学习与事务智能体工作台</p>
-      </div>
-      <section class="panel auth-panel">
-        <div class="row">
+      <section class="brand">
+        <div class="brand-mark">C</div>
+        <div>
+          <h1>campus-multi-agent</h1>
+          <p>清爽的校园智能体工作台</p>
+        </div>
+      </section>
+
+      <section class="user-card">
+        <div id="avatar" class="avatar">?</div>
+        <div class="user-fields">
           <input id="username" placeholder="用户名" autocomplete="username">
           <input id="password" type="password" placeholder="密码" autocomplete="current-password">
+          <input id="displayName" placeholder="昵称">
         </div>
-        <input id="displayName" placeholder="昵称">
         <div class="actions">
           <button id="loginBtn">登录</button>
-          <button id="registerBtn" class="secondary">注册</button>
+          <button id="registerBtn" class="ghost">注册</button>
         </div>
         <p id="authState" class="state">未登录</p>
       </section>
+
       <nav class="nav">
         <button class="active" data-view="chat">对话</button>
         <button data-view="courses">课程</button>
@@ -38,13 +44,13 @@
         <header class="view-header">
           <div>
             <h2>多 Agent 对话</h2>
-            <p class="muted">Router Agent 会自动分派到课程问答、学习规划、资料总结或校园事务 Agent。</p>
+            <p>课程问答、资料总结、学习规划和校园事务。</p>
           </div>
-          <button id="newSessionBtn" class="secondary">新会话</button>
+          <button id="newSessionBtn" class="ghost">新会话</button>
         </header>
         <div id="messages" class="messages"></div>
         <div class="composer">
-          <textarea id="chatInput" rows="3" placeholder="例如：帮我总结操作系统资料里的进程调度重点"></textarea>
+          <textarea id="chatInput" rows="3" placeholder="问一个学习或校园事务问题"></textarea>
           <button id="sendBtn">发送</button>
         </div>
       </section>
@@ -55,21 +61,23 @@
         </header>
         <form id="courseForm" class="form-grid">
           <input name="name" placeholder="课程名" required>
-          <input name="term" placeholder="学期，如 2026 春">
+          <input name="term" placeholder="学期">
           <input name="teacher" placeholder="教师">
-          <button>新增课程</button>
+          <button>新增</button>
         </form>
         <div id="courseList" class="list"></div>
       </section>
 
       <section id="materials" class="view">
         <header class="view-header">
-          <h2>课程资料</h2>
+          <h2>资料</h2>
         </header>
         <form id="materialForm" class="stack">
-          <input name="title" placeholder="资料标题" required>
-          <input name="courseId" placeholder="课程 ID，可选">
-          <textarea name="content" rows="10" placeholder="粘贴课程资料文本，第一版先支持文本上传" required></textarea>
+          <div class="two-col">
+            <input name="title" placeholder="资料标题" required>
+            <input name="courseId" placeholder="课程 ID">
+          </div>
+          <textarea name="content" rows="10" placeholder="粘贴课程资料文本" required></textarea>
           <button>上传并索引</button>
         </form>
         <div id="materialList" class="list"></div>
@@ -83,10 +91,11 @@
           <input name="title" placeholder="待办标题" required>
           <input name="dueDate" type="date">
           <input name="description" placeholder="说明">
-          <button>创建待办</button>
+          <button>创建</button>
         </form>
         <div id="todoList" class="list"></div>
       </section>
+
     </section>
   </main>
   <script src="./app.js"></script>

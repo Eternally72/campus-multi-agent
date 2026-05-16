@@ -67,11 +67,18 @@ The project intentionally does not introduce Spring Cloud Gateway in the first v
 │   └── user/                 # User domain
 ├── src/main/resources/
 │   ├── application.yml       # Runtime configuration
-│   └── db/migration/         # Flyway migrations for MySQL
+│   ├── db/migration/         # Flyway migrations for MySQL
+│   └── system-prompt/        # System prompts for each agent
 ├── docker-compose.yml
 ├── Dockerfile
 └── pom.xml
 ```
+
+## Agent Prompts
+
+System prompts are stored as Markdown files under `src/main/resources/system-prompt`.
+Each file corresponds to one agent role and is loaded by `AgentPromptFactory` at startup.
+This keeps prompt engineering independent from Java business code.
 
 ## Configuration
 
@@ -137,6 +144,7 @@ mvn dependency:go-offline
 | `POST` | `/api/courses` | Create a course |
 | `GET` | `/api/materials` | List course materials |
 | `POST` | `/api/materials` | Upload and index course material text |
+| `DELETE` | `/api/materials/{id}` | Delete material and related vector chunks |
 | `POST` | `/api/agent/chat` | Send a message to the multi-agent orchestrator |
 | `GET` | `/api/agent/sessions` | List chat sessions |
 | `GET` | `/api/agent/sessions/{sessionId}/messages` | List messages in a session |
@@ -147,10 +155,11 @@ mvn dependency:go-offline
 ## Roadmap
 
 - Add PDF, PPT, DOCX parsing for course material uploads.
+- Add production-grade RAG features, including configurable retrieval parameters, hybrid search, reranking, document delete/reindex workflows, and retrieval evaluation.
 - Move document parsing and vector indexing fully behind RocketMQ consumers.
 - Add SSE streaming responses for AI chat.
 - Add Redis-backed conversation summary and hot question cache.
-- Add optional tools for Beijing Jiaotong University course platform assignments and classroom availability after confirming login, captcha, and data usage constraints.
+- Add school-system integrations only after a stable, authorized data access approach is confirmed.
 
 ## License
 

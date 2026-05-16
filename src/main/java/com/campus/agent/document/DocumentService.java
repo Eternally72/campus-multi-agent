@@ -62,4 +62,20 @@ public class DocumentService {
             .map(MaterialResponse::from)
             .toList();
     }
+
+    @Transactional
+    public void delete(Long userId, Long materialId) {
+        CourseMaterial material = ownedMaterial(userId, materialId);
+        ragService.deleteMaterialVectors(userId, material.getId());
+        materials.delete(material);
+    }
+
+    private CourseMaterial ownedMaterial(Long userId, Long materialId) {
+        CourseMaterial material = materials.findById(materialId)
+            .orElseThrow(() -> new IllegalArgumentException("资料不存在"));
+        if (!material.getOwner().getId().equals(userId)) {
+            throw new IllegalArgumentException("无权访问该资料");
+        }
+        return material;
+    }
 }

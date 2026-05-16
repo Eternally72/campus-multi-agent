@@ -55,3 +55,12 @@ campus:
     initialize-schema: ${PGVECTOR_INITIALIZE_SCHEMA:true}
   upload:
     max-characters: ${DOCUMENT_MAX_CHARACTERS:120000}
+  rag:
+    chunk-size: ${RAG_CHUNK_SIZE:900}
+    chunk-overlap: ${RAG_CHUNK_OVERLAP:120}
+    top-k: ${RAG_TOP_K:5}
+    candidate-k: ${RAG_CANDIDATE_K:12}
+    similarity-threshold: ${RAG_SIMILARITY_THRESHOLD:0.0}
+    rerank-enabled: ${RAG_RERANK_ENABLED:true}
+    vector-weight: ${RAG_VECTOR_WEIGHT:0.82}
+    lexical-weight: ${RAG_LEXICAL_WEIGHT:0.18}
