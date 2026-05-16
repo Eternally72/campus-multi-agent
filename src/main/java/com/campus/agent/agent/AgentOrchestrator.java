@@ -2,6 +2,8 @@ package com.campus.agent.agent;
 
 import com.campus.agent.rag.RagSearchResult;
 import com.campus.agent.rag.RagService;
+import com.campus.agent.memory.MemoryContext;
+import com.campus.agent.memory.MemoryService;
 import com.campus.agent.user.AppUser;
 import com.campus.agent.user.AppUserRepository;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +24,7 @@ public class AgentOrchestrator {
     private final AgentPromptFactory promptFactory;
     private final AiGateway aiGateway;
     private final RagService ragService;
+    private final MemoryService memoryService;
 
     @Transactional
     public ChatResponse chat(Long userId, ChatRequest request) {
@@ -35,10 +38,11 @@ public class AgentOrchestrator {
         userMessage.setContent(request.message());
         messages.save(userMessage);
 
+        MemoryContext memoryContext = memoryService.buildContext(userId, session.getId());
         List<RagSearchResult> references = ragService.search(userId, request.message(), 5);
         String answer = aiGateway.complete(
             promptFactory.systemPrompt(agentType),
-            promptFactory.userPrompt(request.message(), references)
+            promptFactory.userPrompt(request.message(), references, memoryContext)
         );
 
         ChatMessage assistantMessage = new ChatMessage();
@@ -49,6 +53,7 @@ public class AgentOrchestrator {
         messages.save(assistantMessage);
 
         session.setUpdatedAt(Instant.now());
+        memoryService.afterTurn(userId, session, userMessage, assistantMessage);
         return new ChatResponse(session.getId(), agentType, answer, references);
     }
 

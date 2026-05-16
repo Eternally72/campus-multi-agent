@@ -7,6 +7,7 @@ public record RagSearchResult(
     Map<String, Object> metadata,
     Double score,
     Double rerankScore,
+    String rerankProvider,
     String title,
     String materialId,
     String chunkIndex

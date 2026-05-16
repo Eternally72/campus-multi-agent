@@ -24,9 +24,10 @@ function headers(json = true) {
 }
 
 async function request(path, options = {}) {
+  const useJson = options.json !== false;
   const response = await fetch(`${apiBase}${path}`, {
     ...options,
-    headers: { ...headers(options.json !== false), ...(options.headers || {}) }
+    headers: { ...headers(useJson), ...(options.headers || {}) }
   });
   const payload = await response.json();
   if (!response.ok || !payload.success) {
@@ -134,6 +135,20 @@ $("#materialForm").addEventListener("submit", async (event) => {
   loadMaterials();
 });
 
+$("#materialFileForm").addEventListener("submit", async (event) => {
+  event.preventDefault();
+  const form = new FormData(event.target);
+  if (!form.get("title")) {
+    form.delete("title");
+  }
+  if (!form.get("courseId")) {
+    form.delete("courseId");
+  }
+  await request("/materials/upload", { method: "POST", body: form, json: false });
+  event.target.reset();
+  loadMaterials();
+});
+
 $("#todoForm").addEventListener("submit", async (event) => {
   event.preventDefault();
   const form = new FormData(event.target);
@@ -143,6 +158,8 @@ $("#todoForm").addEventListener("submit", async (event) => {
   event.target.reset();
   loadTodos();
 });
+
+$("#refreshMemoryBtn").addEventListener("click", loadMemory);
 
 async function loadCourses() {
   if (!token) return;
@@ -162,6 +179,7 @@ async function loadMaterials() {
     <article class="item">
       <strong>${escapeHtml(item.title)}</strong>
       <div class="meta">状态：${item.status}${item.courseId ? ` · 课程 #${item.courseId}` : ""}${item.errorMessage ? ` · ${escapeHtml(item.errorMessage)}` : ""}</div>
+      <button class="tiny" data-reindex-material-id="${item.id}">重建索引</button>
       <button class="tiny danger" data-material-id="${item.id}">删除</button>
     </article>
   `).join("") : `<div class="empty">还没有资料</div>`;
@@ -172,6 +190,16 @@ async function loadMaterials() {
       }
       try {
         await request(`/materials/${button.dataset.materialId}`, { method: "DELETE" });
+        loadMaterials();
+      } catch (error) {
+        window.alert(error.message);
+      }
+    });
+  });
+  document.querySelectorAll("[data-reindex-material-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      try {
+        await request(`/materials/${button.dataset.reindexMaterialId}/reindex`, { method: "POST" });
         loadMaterials();
       } catch (error) {
         window.alert(error.message);
@@ -191,8 +219,52 @@ async function loadTodos() {
   `).join("") : `<div class="empty">还没有待办</div>`;
 }
 
+async function loadMemory() {
+  if (!token) return;
+  const [memories, candidates] = await Promise.all([
+    request("/memory"),
+    request("/memory/candidates")
+  ]);
+  $("#memoryCandidateList").innerHTML = candidates.length ? candidates.map((item) => `
+    <article class="item">
+      <strong>${escapeHtml(item.type)} · ${escapeHtml(item.key)}</strong>
+      <div class="meta">${escapeHtml(item.value)} · 置信度 ${item.confidence ?? ""} · ${escapeHtml(item.reason || "")}</div>
+      <button class="tiny" data-confirm-candidate-id="${item.id}">确认</button>
+      <button class="tiny danger" data-reject-candidate-id="${item.id}">拒绝</button>
+    </article>
+  `).join("") : `<div class="empty">没有待确认记忆</div>`;
+  $("#memoryList").innerHTML = memories.length ? memories.map((item) => `
+    <article class="item">
+      <strong>${escapeHtml(item.type)} · ${escapeHtml(item.key)}</strong>
+      <div class="meta">${escapeHtml(item.value)} · 置信度 ${item.confidence ?? ""}${item.expiresAt ? ` · 过期 ${escapeHtml(item.expiresAt)}` : ""}</div>
+      <button class="tiny danger" data-memory-type="${item.type}" data-memory-id="${item.id}">遗忘</button>
+    </article>
+  `).join("") : `<div class="empty">还没有长期记忆</div>`;
+  document.querySelectorAll("[data-confirm-candidate-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await request(`/memory/candidates/${button.dataset.confirmCandidateId}/confirm`, { method: "POST" });
+      loadMemory();
+    });
+  });
+  document.querySelectorAll("[data-reject-candidate-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      await request(`/memory/candidates/${button.dataset.rejectCandidateId}/reject`, { method: "POST" });
+      loadMemory();
+    });
+  });
+  document.querySelectorAll("[data-memory-id]").forEach((button) => {
+    button.addEventListener("click", async () => {
+      const path = button.dataset.memoryType === "preference"
+        ? `/memory/preferences/${button.dataset.memoryId}`
+        : `/memory/facts/${button.dataset.memoryId}`;
+      await request(path, { method: "DELETE" });
+      loadMemory();
+    });
+  });
+}
+
 function refreshAll() {
-  Promise.allSettled([loadCourses(), loadMaterials(), loadTodos()]);
+  Promise.allSettled([loadCourses(), loadMaterials(), loadTodos(), loadMemory()]);
 }
 
 function escapeHtml(value) {

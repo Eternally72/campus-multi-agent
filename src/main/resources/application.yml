@@ -4,6 +4,10 @@ server:
 spring:
   application:
     name: campus-multi-agent
+  servlet:
+    multipart:
+      max-file-size: ${UPLOAD_MAX_FILE_SIZE:20MB}
+      max-request-size: ${UPLOAD_MAX_REQUEST_SIZE:25MB}
   datasource:
     url: ${MYSQL_URL:jdbc:mysql://localhost:3306/campus_agent?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai}
     username: ${MYSQL_USERNAME:campus}
@@ -55,6 +59,11 @@ campus:
     initialize-schema: ${PGVECTOR_INITIALIZE_SCHEMA:true}
   upload:
     max-characters: ${DOCUMENT_MAX_CHARACTERS:120000}
+  memory:
+    short-term-ttl-minutes: ${MEMORY_SHORT_TERM_TTL_MINUTES:1440}
+    short-term-max-messages: ${MEMORY_SHORT_TERM_MAX_MESSAGES:16}
+    summary-max-characters: ${MEMORY_SUMMARY_MAX_CHARACTERS:3000}
+    fact-default-ttl-days: ${MEMORY_FACT_DEFAULT_TTL_DAYS:180}
   rag:
     chunk-size: ${RAG_CHUNK_SIZE:900}
     chunk-overlap: ${RAG_CHUNK_OVERLAP:120}
@@ -64,3 +73,8 @@ campus:
     rerank-enabled: ${RAG_RERANK_ENABLED:true}
     vector-weight: ${RAG_VECTOR_WEIGHT:0.82}
     lexical-weight: ${RAG_LEXICAL_WEIGHT:0.18}
+    reranker-model: ${RAG_RERANKER_MODEL:qwen3-rerank}
+    reranker-endpoint: ${RAG_RERANKER_ENDPOINT:https://dashscope.aliyuncs.com/compatible-api/v1/reranks}
+    reranker-instruction: ${RAG_RERANKER_INSTRUCTION:Given a student question, retrieve the most relevant course material passages that answer the question.}
+    reranker-timeout-seconds: ${RAG_RERANKER_TIMEOUT_SECONDS:12}
+    local-rerank-fallback: ${RAG_LOCAL_RERANK_FALLBACK:true}

@@ -9,18 +9,15 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class DocumentEventPublisher {
 
-    private static final String TOPIC = "campus-document-index";
+    public static final String TOPIC = "campus-document-index";
 
     private final ObjectProvider<RocketMQTemplate> rocketMQTemplateProvider;
 
     public void publishIndexRequested(DocumentIndexEvent event) {
         RocketMQTemplate template = rocketMQTemplateProvider.getIfAvailable();
-        if (template != null) {
-            try {
-                template.convertAndSend(TOPIC, event);
-            } catch (RuntimeException ignored) {
-                // The first version indexes synchronously; MQ is an extension point when RocketMQ is online.
-            }
+        if (template == null) {
+            throw new IllegalStateException("RocketMQTemplate is not available");
         }
+        template.convertAndSend(TOPIC, event);
     }
 }

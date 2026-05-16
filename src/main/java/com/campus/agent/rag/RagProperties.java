@@ -11,7 +11,12 @@ public record RagProperties(
     double similarityThreshold,
     boolean rerankEnabled,
     double vectorWeight,
-    double lexicalWeight
+    double lexicalWeight,
+    String rerankerModel,
+    String rerankerEndpoint,
+    String rerankerInstruction,
+    int rerankerTimeoutSeconds,
+    boolean localRerankFallback
 ) {
 
     public RagProperties {
@@ -32,6 +37,9 @@ public record RagProperties(
         }
         if (vectorWeight < 0 || lexicalWeight < 0 || vectorWeight + lexicalWeight <= 0) {
             throw new IllegalArgumentException("campus.rag rerank weights must be non-negative and not both zero");
+        }
+        if (rerankerTimeoutSeconds < 1) {
+            throw new IllegalArgumentException("campus.rag.reranker-timeout-seconds must be at least 1");
         }
     }
 }

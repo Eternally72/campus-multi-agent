@@ -9,11 +9,12 @@ The system provides course question answering, course material summarization, st
 - **Authentication and authorization**: user registration, login, JWT issuance, and protected APIs.
 - **Course management**: create and list personal courses.
 - **Course material knowledge base**: upload text materials and index them into a vector database.
-- **RAG retrieval**: retrieve user-scoped course material chunks from pgvector.
+- **RAG retrieval**: retrieve user-scoped course material chunks from pgvector, rerank candidates with DashScope reranker, and fallback to local reranking when needed.
 - **Multi-agent orchestration**: route user requests to course QA, study planning, material summary, or campus affairs agents.
 - **Conversation history**: persist chat sessions and messages.
+- **Four-layer memory**: keep short-term session memory, medium-term summaries, long-term user preferences, and expiring user facts, with LLM-assisted memory candidates that require user confirmation.
 - **Todo management**: create, list, and update todo items.
-- **Message queue extension point**: publish document indexing events to RocketMQ while keeping synchronous indexing for the first runnable version.
+- **Asynchronous indexing**: publish document indexing events to RocketMQ and update material index status from the consumer.
 - **Web access**: serve the frontend through a project-scoped Nginx container.
 
 ## Architecture
@@ -44,6 +45,8 @@ The project intentionally does not introduce Spring Cloud Gateway in the first v
 - PostgreSQL 16 + pgvector
 - Redis 7.4
 - RocketMQ 5.5.0
+- Apache PDFBox 3.0.7
+- Apache POI 5.5.1
 - Nginx 1.28
 
 ## Project Structure
@@ -99,6 +102,42 @@ Sensitive local files such as `.env` are ignored by Git. Do not commit real API 
 
 If `AI_DASHSCOPE_API_KEY` is not configured, the application can still start. The agent layer will return a local fallback response so that authentication, course materials, RAG wiring, todos, and conversation persistence can be tested first.
 
+RAG retrieval can be tuned with environment variables:
+
+```bash
+RAG_TOP_K=5
+RAG_CANDIDATE_K=12
+RAG_SIMILARITY_THRESHOLD=0.0
+RAG_RERANK_ENABLED=true
+RAG_RERANKER_MODEL=qwen3-rerank
+RAG_LOCAL_RERANK_FALLBACK=true
+```
+
+When `AI_DASHSCOPE_API_KEY` is available, retrieved chunks are reranked through DashScope `qwen3-rerank`. If the reranker is unavailable and local fallback is enabled, the system falls back to a lightweight local score.
+
+Memory can be tuned with:
+
+```bash
+MEMORY_SHORT_TERM_TTL_MINUTES=1440
+MEMORY_SHORT_TERM_MAX_MESSAGES=16
+MEMORY_SUMMARY_MAX_CHARACTERS=3000
+MEMORY_FACT_DEFAULT_TTL_DAYS=180
+```
+
+Short-term memory is stored in Redis and treated as a cache. Medium-term summaries, long-term preferences, and fact memories are stored in MySQL. When a new preference or fact replaces an older memory with the same key, the older memory is marked as `FORGOTTEN` instead of being physically deleted.
+
+The memory pipeline is confirmation-first:
+
+```text
+user message
+  -> LLM memory extractor
+  -> pending memory candidate
+  -> user confirms or rejects
+  -> confirmed candidate becomes long-term preference or fact memory
+```
+
+If the LLM extractor is unavailable, a small rule-based extractor creates fallback candidates for explicit preference or fact statements.
+
 ## Run with Docker Compose
 
 ```bash
@@ -144,19 +183,27 @@ mvn dependency:go-offline
 | `POST` | `/api/courses` | Create a course |
 | `GET` | `/api/materials` | List course materials |
 | `POST` | `/api/materials` | Upload and index course material text |
+| `POST` | `/api/materials/upload` | Upload PDF, DOCX, TXT, or Markdown and index extracted text |
+| `POST` | `/api/materials/{id}/reindex` | Rebuild vector index for a material asynchronously |
 | `DELETE` | `/api/materials/{id}` | Delete material and related vector chunks |
 | `POST` | `/api/agent/chat` | Send a message to the multi-agent orchestrator |
 | `GET` | `/api/agent/sessions` | List chat sessions |
 | `GET` | `/api/agent/sessions/{sessionId}/messages` | List messages in a session |
+| `GET` | `/api/memory` | List active long-term preferences and fact memories |
+| `GET` | `/api/memory/candidates` | List pending memory candidates |
+| `POST` | `/api/memory/candidates/{id}/confirm` | Confirm and promote a memory candidate |
+| `POST` | `/api/memory/candidates/{id}/reject` | Reject a memory candidate |
+| `DELETE` | `/api/memory/preferences/{id}` | Forget a preference memory |
+| `DELETE` | `/api/memory/facts/{id}` | Forget a fact memory |
 | `GET` | `/api/todos` | List todos |
 | `POST` | `/api/todos` | Create a todo |
 | `PATCH` | `/api/todos/{id}/status?status=DONE` | Update todo status |
 
 ## Roadmap
 
-- Add PDF, PPT, DOCX parsing for course material uploads.
-- Add production-grade RAG features, including configurable retrieval parameters, hybrid search, reranking, document delete/reindex workflows, and retrieval evaluation.
-- Move document parsing and vector indexing fully behind RocketMQ consumers.
+- Add PPT parsing for course material uploads.
+- Add hybrid search, query rewriting, and stronger retrieval observability.
+- Add retrieval evaluation datasets and metrics.
 - Add SSE streaming responses for AI chat.
 - Add Redis-backed conversation summary and hot question cache.
 - Add school-system integrations only after a stable, authorized data access approach is confirmed.

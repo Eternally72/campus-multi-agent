@@ -36,6 +36,7 @@
         <button data-view="courses">课程</button>
         <button data-view="materials">资料</button>
         <button data-view="todos">待办</button>
+        <button data-view="memory">记忆</button>
       </nav>
     </aside>
 
@@ -78,7 +79,15 @@
             <input name="courseId" placeholder="课程 ID">
           </div>
           <textarea name="content" rows="10" placeholder="粘贴课程资料文本" required></textarea>
-          <button>上传并索引</button>
+          <button>保存文本并异步索引</button>
+        </form>
+        <form id="materialFileForm" class="stack upload-panel">
+          <div class="two-col">
+            <input name="title" placeholder="文件标题，默认使用文件名">
+            <input name="courseId" placeholder="课程 ID">
+          </div>
+          <input name="file" type="file" accept=".pdf,.docx,.txt,.md" required>
+          <button>上传文件并异步索引</button>
         </form>
         <div id="materialList" class="list"></div>
       </section>
@@ -94,6 +103,26 @@
           <button>创建</button>
         </form>
         <div id="todoList" class="list"></div>
+      </section>
+
+      <section id="memory" class="view">
+        <header class="view-header">
+          <div>
+            <h2>记忆</h2>
+            <p>长期偏好和事实记忆会影响后续回答，可随时遗忘。</p>
+          </div>
+          <button id="refreshMemoryBtn" class="ghost">刷新</button>
+        </header>
+        <div class="memory-columns">
+          <section>
+            <h3>待确认</h3>
+            <div id="memoryCandidateList" class="list"></div>
+          </section>
+          <section>
+            <h3>已生效</h3>
+            <div id="memoryList" class="list"></div>
+          </section>
+        </div>
       </section>
 
     </section>

@@ -23,6 +23,7 @@ import java.util.Set;
 public class RagService {
 
     private final ObjectProvider<VectorStore> vectorStoreProvider;
+    private final ObjectProvider<RerankClient> rerankClientProvider;
     private final RagProperties properties;
 
     public boolean available() {
@@ -64,11 +65,10 @@ public class RagService {
             .similarityThreshold(properties.similarityThreshold())
             .filterExpression(userFilter(userId))
             .build();
-        return vectorStore.similaritySearch(request).stream()
+        List<RagSearchResult> candidates = vectorStore.similaritySearch(request).stream()
             .map(document -> toResult(document, query))
-            .sorted(resultComparator())
-            .limit(resolveTopK(topK))
             .toList();
+        return rerank(query, candidates, resolveTopK(topK));
     }
 
     public void deleteMaterialVectors(Long userId, Long materialId) {
@@ -112,9 +112,44 @@ public class RagService {
             metadata,
             vectorScore,
             rerankScore,
+            properties.rerankEnabled() ? "local" : "vector",
             stringValue(metadata.get("title")),
             stringValue(metadata.get("materialId")),
             stringValue(metadata.get("chunk"))
+        );
+    }
+
+    private List<RagSearchResult> rerank(String query, List<RagSearchResult> candidates, int topK) {
+        if (!properties.rerankEnabled()) {
+            return candidates.stream().sorted(resultComparator()).limit(topK).toList();
+        }
+        RerankClient rerankClient = rerankClientProvider.getIfAvailable();
+        if (rerankClient != null) {
+            try {
+                return rerankClient.rerank(query, candidates, topK);
+            } catch (RuntimeException exception) {
+                if (!properties.localRerankFallback()) {
+                    throw exception;
+                }
+            }
+        }
+        return candidates.stream()
+            .map(candidate -> withLocalRerankScore(query, candidate))
+            .sorted(resultComparator())
+            .limit(topK)
+            .toList();
+    }
+
+    private RagSearchResult withLocalRerankScore(String query, RagSearchResult result) {
+        return new RagSearchResult(
+            result.content(),
+            result.metadata(),
+            result.score(),
+            rerankScore(query, result.content(), result.metadata(), result.score()),
+            "local",
+            result.title(),
+            result.materialId(),
+            result.chunkIndex()
         );
     }
 

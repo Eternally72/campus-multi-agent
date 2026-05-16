@@ -1,6 +1,7 @@
 package com.campus.agent.agent;
 
 import com.campus.agent.rag.RagSearchResult;
+import com.campus.agent.memory.MemoryContext;
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Component;
 
@@ -29,8 +30,9 @@ public class AgentPromptFactory {
         return systemPrompts.get(type);
     }
 
-    public String userPrompt(String message, List<RagSearchResult> references) {
+    public String userPrompt(String message, List<RagSearchResult> references, MemoryContext memoryContext) {
         StringBuilder builder = new StringBuilder();
+        appendMemory(builder, memoryContext);
         builder.append("用户问题：\n").append(message).append("\n\n");
         if (references.isEmpty()) {
             builder.append("知识库检索结果：暂无可用上下文。\n");
@@ -48,6 +50,27 @@ public class AgentPromptFactory {
         }
         builder.append("\n请用中文回答，结构清晰，避免编造。");
         return builder.toString();
+    }
+
+    private void appendMemory(StringBuilder builder, MemoryContext memoryContext) {
+        if (memoryContext == null) {
+            return;
+        }
+        builder.append("可用记忆上下文：\n");
+        if (!memoryContext.longTermPreferences().isEmpty()) {
+            builder.append("- 长期偏好：").append(String.join("；", memoryContext.longTermPreferences())).append("\n");
+        }
+        if (!memoryContext.facts().isEmpty()) {
+            builder.append("- 用户事实：").append(String.join("；", memoryContext.facts())).append("\n");
+        }
+        if (memoryContext.mediumSummary() != null && !memoryContext.mediumSummary().isBlank()) {
+            builder.append("- 会话摘要：").append(memoryContext.mediumSummary()).append("\n");
+        }
+        if (!memoryContext.shortTermMessages().isEmpty()) {
+            builder.append("- 当前会话最近消息：\n");
+            memoryContext.shortTermMessages().forEach(item -> builder.append("  - ").append(item).append("\n"));
+        }
+        builder.append("\n");
     }
 
     private String load(String filename) {

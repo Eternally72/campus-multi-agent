@@ -24,6 +24,11 @@
       "name": "campus.rag",
       "type": "com.campus.agent.rag.RagProperties",
       "description": "RAG retrieval, chunking, and reranking settings."
+    },
+    {
+      "name": "campus.memory",
+      "type": "com.campus.agent.memory.MemoryProperties",
+      "description": "Short, medium, long-term, and fact memory settings."
     }
   ],
   "properties": [
@@ -129,6 +134,59 @@
       "type": "java.lang.Double",
       "defaultValue": 0.18,
       "description": "Weight of lexical overlap score in lightweight reranking."
+    },
+    {
+      "name": "campus.rag.reranker-model",
+      "type": "java.lang.String",
+      "defaultValue": "qwen3-rerank",
+      "description": "DashScope reranker model name."
+    },
+    {
+      "name": "campus.rag.reranker-endpoint",
+      "type": "java.lang.String",
+      "defaultValue": "https://dashscope.aliyuncs.com/compatible-api/v1/reranks",
+      "description": "DashScope OpenAI-compatible rerank endpoint."
+    },
+    {
+      "name": "campus.rag.reranker-instruction",
+      "type": "java.lang.String",
+      "description": "Instruction passed to the reranker model."
+    },
+    {
+      "name": "campus.rag.reranker-timeout-seconds",
+      "type": "java.lang.Integer",
+      "defaultValue": 12,
+      "description": "HTTP timeout for the external reranker call."
+    },
+    {
+      "name": "campus.rag.local-rerank-fallback",
+      "type": "java.lang.Boolean",
+      "defaultValue": true,
+      "description": "Whether to fallback to lightweight local reranking if external reranking is unavailable."
+    },
+    {
+      "name": "campus.memory.short-term-ttl-minutes",
+      "type": "java.lang.Integer",
+      "defaultValue": 1440,
+      "description": "Redis TTL for short-term session memory."
+    },
+    {
+      "name": "campus.memory.short-term-max-messages",
+      "type": "java.lang.Integer",
+      "defaultValue": 16,
+      "description": "Maximum short-term memory messages retained per session."
+    },
+    {
+      "name": "campus.memory.summary-max-characters",
+      "type": "java.lang.Integer",
+      "defaultValue": 3000,
+      "description": "Maximum characters retained in medium-term conversation summaries."
+    },
+    {
+      "name": "campus.memory.fact-default-ttl-days",
+      "type": "java.lang.Integer",
+      "defaultValue": 180,
+      "description": "Default expiration period for user fact memories."
     }
   ]
 }

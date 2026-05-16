@@ -22,6 +22,8 @@
         <spring-ai.version>1.1.6</spring-ai.version>
         <spring-ai-alibaba.version>1.1.2.2</spring-ai-alibaba.version>
         <rocketmq-spring.version>2.3.4</rocketmq-spring.version>
+        <pdfbox.version>3.0.7</pdfbox.version>
+        <poi.version>5.5.1</poi.version>
     </properties>
 
     <dependencyManagement>
@@ -78,6 +80,16 @@
             <groupId>org.apache.rocketmq</groupId>
             <artifactId>rocketmq-spring-boot-starter</artifactId>
             <version>${rocketmq-spring.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.pdfbox</groupId>
+            <artifactId>pdfbox</artifactId>
+            <version>${pdfbox.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>${poi.version}</version>
         </dependency>
         <dependency>
             <groupId>org.flywaydb</groupId>
